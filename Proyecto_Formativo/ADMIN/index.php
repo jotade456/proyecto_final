@@ -2,6 +2,22 @@
 
 session_start();
 
+if (!isset($_SESSION['administrador'])) {
+    // Evita cacheo de esta página
+    header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+    header("Pragma: no-cache");
+    header("Expires: 0");
+    header("Location: login.php");
+    exit();
+}
+
+if (isset($_GET['success'])) {
+    echo "<script>alert('✅ Producto registrado exitosamente');</script>";
+}
+if (isset($_GET['error'])) {
+    echo "<script>alert('❌ Error al registrar el producto');</script>";
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // 🔁 NUEVO: para peticiones AJAX desde JavaScript (buscador con fetch)
@@ -33,7 +49,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $imagen = 'imagenes_productos/default.webp'; // ruta por defecto
         }
 
-        agregar_producto($nombre, $valor, $imagen);
+        // Guardar producto
+        if (agregar_producto($nombre, $valor, $imagen)) {
+            header("Location: index.php?success=1");
+        } else {
+            header("Location: index.php?error=1");
+        }
+        exit; // ¡Muy importante!
     }
 
     // ✅ Modificación desde formulario tradicional
@@ -42,19 +64,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
 
-    if(isset($_POST['id_producto']) && isset($_POST['eliminar_nombre']) && isset($_POST['eliminar_valor'])){
-        eliminar_producto($_POST['id_producto'], $_POST['eliminado_nombre'], $_POST['eliminado_valor']);
-    }
-
-    // cotizaar producto
-    // if(isset($_POST['cantidad_producto_cotizar'] && isset($_POST['valor_producto_cotizar']) && isset($_POST['valor_diseño_cotizar']))){
-    //     $cant_prod_cotizar = $_POST['cantidad_producto_cotizar'];
-    //     $val_prod_cotizar = $_POST['valor_producto_cotizar'];
-    //     $val_diseño_cotizar = $_POST['valor_diseño_cotizar'];
-
-    //     cotizar_productos($cant_prod_cotizar, $val_prod_cotizar, $val_diseño_cotizar);
-        
+    // if(isset($_POST['id_producto']) && isset($_POST['eliminar_nombre']) && isset($_POST['eliminar_valor'])){
+    //     eliminar_producto($_POST['id_producto'], $_POST['eliminado_nombre'], $_POST['eliminado_valor']);
     // }
+
+    if(isset($_POST['cantidad_producto_cotizar']) && isset($_POST['valor_producto_cotizar']) && isset($_POST['valor_diseño_cotizar'])){
+        $cant_prod_cotizar = $_POST['cantidad_producto_cotizar'];
+        $val_prod_cotizar = $_POST['valor_producto_cotizar'];
+        $val_diseño_cotizar = $_POST['valor_diseño_cotizar'];
+
+        cotizar_productos($cant_prod_cotizar, $val_prod_cotizar, $val_diseño_cotizar);
+        
+    }
 }
 
 function conectarBD()
@@ -73,19 +94,17 @@ function agregar_producto($nombre_producto, $valor_producto,$imagen_producto){
     $stmt = $conn->prepare($sql);
 
     if (!$stmt) {
-        die("Error al preparar la consulta: " . $conn->error);
+        return false;
     }
 
     $stmt->bind_param("sds", $nombre_producto, $valor_producto,$imagen_producto);
 
-    if ($stmt->execute()) {
-        echo "<script>alert('\u2705 Registro exitoso');</script>";
-    } else {
-        echo "<script>alert('\u274c Error al registrar: " . $stmt->error . "'); window.history.back();</script>";
-    }
+    $resultado=$stmt->execute();
 
     $stmt->close();
     $conn->close();
+    
+    return $resultado;
 }
 
 function modificar_producto($id, $nuevo_nombre, $nuevo_valor){
@@ -122,33 +141,57 @@ function obtener_producto_por_nombre($nombre) {
     return $producto;
 }
 
-function eliminar_producto($id, $eliminado_nombre, $eliminado_valor){
+// function eliminar_producto($id, $eliminado_nombre, $eliminado_valor){
+//     $conn = conectarBD();
+//     $sql = "UPDATE productos SET nombre = ?, valor_producto = ? WHERE id = ?";
+//     $stmt = $conn->prepare($sql);
+
+//     if (!$stmt) {
+//         die("Error al preparar: " . $conn->error);
+//     }
+
+//     $stmt->bind_param("sdi", $nuevo_nombre, $nuevo_valor, $id);
+
+//     if ($stmt->execute()) {
+//         echo "<script>alert('\u2705 Producto modificado correctamente');</script>";
+//     } else {
+//         echo "<script>alert('\u274c Error al modificar: " . $stmt->error . "');</script>";
+//     }
+
+//     $stmt->close();
+//     $conn->close();
+// }
+
+
+function cotizar_productos($cant_prod_cotizar, $val_prod_cotizar, $val_diseño_cotizar){
     $conn = conectarBD();
-    $sql = "UPDATE productos SET nombre = ?, valor_producto = ? WHERE id = ?";
+
+    // Calcula total
+    $total = ($cant_prod_cotizar * $val_prod_cotizar) + $val_diseño_cotizar;
+
+    // Fecha actual y usuario en sesión
+    $fecha = date("Y-m-d");
+    $id_usuario = $_SESSION['administrador']; // Asegúrate que esta sea la clave correcta
+
+    $sql = "INSERT INTO cotizaciones (fecha, id_usuario, total) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($sql);
 
     if (!$stmt) {
-        die("Error al preparar: " . $conn->error);
+        die("Error en la preparación de la consulta: " . $conn->error);
     }
 
-    $stmt->bind_param("sdi", $nuevo_nombre, $nuevo_valor, $id);
+    $stmt->bind_param("sid", $fecha, $id_usuario, $total);
 
     if ($stmt->execute()) {
-        echo "<script>alert('\u2705 Producto modificado correctamente');</script>";
+        echo "<script>alert('✅ Cotización registrada correctamente');</script>";
     } else {
-        echo "<script>alert('\u274c Error al modificar: " . $stmt->error . "');</script>";
+        echo "<script>alert('❌ Error al registrar la cotización: " . $stmt->error . "');</script>";
     }
 
     $stmt->close();
     $conn->close();
+
 }
-// POR TERMINAR
-
-// function cotizar_productos($cant_prod_cotizar, $val_prod_cotizar, $val_diseño_cotizar){
-//     $conn=conectarBD();
-//     $sql= "INSERT INTO cotizaciones ( id, total)	VALUES (?, ?, ?)";
-
-// }
 
 ?>
 
@@ -198,7 +241,8 @@ function eliminar_producto($id, $eliminado_nombre, $eliminado_valor){
             <h2>Bienvenido, Keynner</h2>
         </div>
         <div class="search-input-box">
-            <input type="text" placeholder="Buscar Producto" />
+            <input type="text" id="buscadorCotizar" placeholder="Buscar producto...">
+            <button onclick="buscarProductoParaCotizar()">Cotizar</button>
             <a href="#" onclick="event.preventDefault(); abrirModalP1();">
                 <i class="fa-solid fa-magnifying-glass icon"></i>
             </a>
@@ -351,7 +395,7 @@ function eliminar_producto($id, $eliminado_nombre, $eliminado_valor){
 
 
 
-    <!-------  MODAL PÁGINA PRINCIPAL 1 ------>
+        <!-- MODAL PÁGINA PRINCIPAL 1 -->
     <div class="modal-principal1" id="modalPrincipal1">
         <div class="modal-contentP1">
             <div class="modal-headerP1">
@@ -359,58 +403,58 @@ function eliminar_producto($id, $eliminado_nombre, $eliminado_valor){
             </div>
             <div class="modal-bodyP1">
                 <div class="imagen-boxP1">
-                    <input type="file" id="inputImagen" onchange="mostrarImagenP1(event)">
+                    <input type="file" id="inputImagenP1" onchange="mostrarImagenP1(event)">
                     <img id="previewImagenP1" style="display: none;">                
                 </div>
-                <form class="formulario-P1">
+                <form class="formulario-P1" id="formularioCotizarP1">
                     <div class="grupo-nombrep1">
-                        <label for="nombreProducto">Nombre del Producto</label>
-                        <input type="text" id="nombreProducto" placeholder="" readonly>
+                        <label for="nombreProductoP1">Nombre del Producto</label>
+                        <input type="text" id="nombreProductoP1" placeholder="" readonly>
                     </div>     
                     <div class="grupo-valorp1">
-                        <label for="valorProducto">Valor del Producto</label>
-                        <input type="number" id="valorProducto" placeholder="" readonly>
+                        <label for="valorProductoP1">Valor del Producto</label>
+                        <input type="number" id="valorProductoP1" placeholder="" readonly>
                     </div> 
-                    <button type="submit">Cotizar</button>
+                    
+                    <button onclick="buscarProductoParaCotizar()">Cotizar</button>
                 </form>
             </div>
         </div>
     </div>
 
-
-    <!-------  MODAL PÁGINA PRINCIPAL 2 ------>
+    <!-- MODAL PÁGINA PRINCIPAL 2 -->
     <div class="modal-principal2" id="modalPrincipal2">
         <div class="modal-contentP2">
             <div class="modal-headerP2">
                 <span class="back-arrow" onclick="cerrarModalP2()">&larr;</span>
             </div>
             <div class="modal-bodyP2">
-                
-                <form method="POST"class="formulario-P2">
+                <form method="POST" class="formulario-P2" id="formularioCotizarP2" enctype="multipart/form-data">
                     <div class="imagen-boxP2">
-                        <input name="imagen_producto_cotizada" type="file" id="inputImagen" onchange="mostrarImagenP2(event)">
+                        <input name="imagen_producto_cotizada" type="file" id="inputImagenP2" onchange="mostrarImagenP2(event)">
                         <img id="previewImagenP2" style="display: none;">                
                     </div>
                     <div class="grupo-cantidadP2">
-                        <label for="cantidadProducto">Cantidad del Producto</label>
-                        <input name="cantidad_producto_cotizar" type="number" id="cantidadProducto" placeholder="Cantidad" required>
+                        <label for="cantidadProductoP2">Cantidad del Producto</label>
+                        <input name="cantidad_producto_cotizar" type="number" id="cantidadProductoP2" placeholder="Cantidad" required>
                     </div>     
                     <div class="grupo-valorImpresionP2">
-                        <label for="valorImpresion">Valor de impresion</label>
-                        <input name="valor_impresion_cotizar"type="number" id="valorImpresion" placeholder="Si se requiere">
+                        <label for="valorImpresionP2">Valor de impresión</label>
+                        <input name="valor_impresion_cotizar" type="number" id="valorImpresionP2" placeholder="Si se requiere">
                     </div>
                     <div class="grupo-valorDiseñoP2">
-                        <label for="valorDiseño">Valor del Diseño</label>
-                        <input name="valor_diseño_cotizar"type="number" id="valorDiseño" placeholder="$$$" required>
+                        <label for="valorDiseñoP2">Valor del Diseño</label>
+                        <input name="valor_diseño_cotizar" type="number" id="valorDiseñoP2" placeholder="$$$" required>
                     </div>
+                    <!-- Es buena idea incluir un campo oculto para enviar el valor del producto -->
+                    <input type="hidden" name="valor_producto_cotizar" id="valorProductoOcultoP2" value="">
                     <button type="submit">Cotizar</button>
                 </form>
             </div>
         </div>
     </div>
 
-
-    <!-------  MODAL PÁGINA PRINCIPAL 3 ------>
+    <!-- MODAL PÁGINA PRINCIPAL 3 -->
     <div class="modal-principal3" id="modalPrincipal3">
         <div class="modal-contentP3">
             <div class="modal-headerP3">
@@ -418,21 +462,21 @@ function eliminar_producto($id, $eliminado_nombre, $eliminado_valor){
             </div>
             <div class="modal-bodyP3">
                 <div class="imagen-boxP3">
-                    <input type="file" id="inputImagen" onchange="mostrarImagenP3(event)">
+                    <input type="file" id="inputImagenP3" onchange="mostrarImagenP3(event)">
                     <img id="previewImagenP3" style="display: none;">                
                 </div>
-                <form class="formulario-P3">
+                <form class="formulario-P3" id="formularioCotizarP3">
                     <div class="grupo-nombreP3">
-                        <label for="nombreProducto">Nombre del Producto</label>
-                        <input type="text" id="nombreProducto" placeholder="" readonly>
+                        <label for="nombreProductoP3">Nombre del Producto</label>
+                        <input type="text" id="nombreProductoP3" placeholder="" readonly>
                     </div>     
                     <div class="grupo-totalP3">
-                        <label for="precioTotal">Precio Total</label>
-                        <input type="number" id="precioTotal" placeholder="" readonly>
+                        <label for="precioTotalP3">Precio Total</label>
+                        <input type="number" id="precioTotalP3" placeholder="" readonly>
                     </div> 
                     <button type="submit">Cotizar</button>
                 </form>
-                <div class="ventana-emergenteP3" id="ventanaEmergenteP3">
+                <div class="ventana-emergenteP3" id="ventanaEmergenteP3" style="display:none;">
                     <div class="ventana-contenidoP3">
                         <div class="ventana-encabezadoP3">
                             <h2>Cotizar</h2>
