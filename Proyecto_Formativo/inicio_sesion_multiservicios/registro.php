@@ -1,7 +1,7 @@
 <?php
 function conectarBD()
 {
-    $conn = new mysqli("localhost", "root", "", "multiservicios_roma");
+    $conn = new mysqli("localhost", "root", "", "CotizacionesMagicas");
 
     if ($conn->connect_error) {
         die("Conexión fallida: " . $conn->connect_error);

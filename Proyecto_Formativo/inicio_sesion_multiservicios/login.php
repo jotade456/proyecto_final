@@ -4,7 +4,7 @@ function conectarBD()
     $servername = "localhost";
     $username = "root";
     $password = "";
-    $dbname = "multiservicios_roma";
+    $dbname = "CotizacionesMagicas";
 
     $conn = new mysqli($servername, $username, $password, $dbname);
 

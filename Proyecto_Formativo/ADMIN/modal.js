@@ -277,15 +277,17 @@ function mostrarImagenP1(event) {
 document.querySelector('.formulario-P1 button').addEventListener('click', function (e) {
   e.preventDefault();
   const valorP1 = document.getElementById("valorProductoP1").value;
+  const idProducto = document.getElementById("idProductoP1").value;
+  
   document.getElementById("valorProductoOcultoP2").value = valorP1;
+  document.getElementById("idProductoOcultoP2").value = idProducto; // Pasar el ID
 
   cerrarModalP1();
   abrirModalP2();
 });
 
 
-//------------- MODAL PAGINA PRINCIPAL 2 -----------------
-
+// ------------- MODAL PAGINA PRINCIPAL 2 -----------------
 function abrirModalP2() {
   document.getElementById('modalPrincipal2').classList.add('active');
 }
@@ -297,9 +299,9 @@ function cerrarModalP2() {
 function mostrarImagenP2(event) {
   const file = event.target.files[0];
   const preview = document.getElementById('previewImagenP2');
-  if (file) {
+  if (file && preview) {
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = function(e) {
       preview.src = e.target.result;
       preview.style.display = 'block';
     };
@@ -307,33 +309,116 @@ function mostrarImagenP2(event) {
   }
 }
 
-// Botón dentro del formulario P2, evita submit y abre modal 3
-document.querySelector('.formulario-P2 button').addEventListener('click', function (e) {
+async function handleCotizacion(e) {
   e.preventDefault();
+  
+  const btn = e.target;
+  const originalText = btn.innerHTML;
+  
+  try {
+    // Estado de carga
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    
+    // Obtener elementos del DOM con verificación de existencia
+    const getElement = (id) => {
+      const el = document.getElementById(id);
+      if (!el) throw new Error(`Elemento con ID ${id} no encontrado`);
+      return el;
+    };
 
-  const cantidad = document.getElementById("cantidadProductoP2").value;
-  const valorImpresion = document.getElementById("valorImpresionP2").value || 0;
-  const valorDiseño = document.getElementById("valorDiseñoP2").value;
-  const valorProducto = document.getElementById("valorProductoOcultoP2").value;
+    const cantidadInput = getElement('cantidadProductoP2');
+    const diseñoInput = getElement('valorDiseñoP2');
+    const valorProductoInput = getElement('valorProductoOcultoP2');
+    const idProductoInput = getElement('idProductoOcultoP2');
+    const impresionInput = document.getElementById('valorImpresionP2'); // Opcional
+    
+    // Validación de valores
+    const cantidad = parseFloat(cantidadInput.value);
+    const valorDiseño = parseFloat(diseñoInput.value) || 0;
+    const valorProducto = parseFloat(valorProductoInput.value);
+    const idProducto = idProductoInput.value;
+    const valorImpresion = impresionInput ? parseFloat(impresionInput.value) || 0 : 0;
 
-  const total = (cantidad * valorProducto) + Number(valorImpresion) + Number(valorDiseño);
+    if (isNaN(cantidad) || cantidad <= 0) {
+      throw new Error('Ingrese una cantidad válida (mayor que 0)');
+    }
+    
+    if (isNaN(valorDiseño) || valorDiseño < 0) {
+      throw new Error('Ingrese un valor de diseño válido');
+    }
 
-  document.getElementById("precioTotalP3").value = total;
+    // Preparar datos
+    const formData = new FormData();
+    formData.append('cantidad_producto_cotizar', cantidad);
+    formData.append('valor_producto_cotizar', valorProducto);
+    formData.append('valor_diseño_cotizar', valorDiseño);
+    formData.append('valor_impresion_cotizar', valorImpresion);
+    formData.append('id_producto', idProducto);
 
-  const nombreProducto = document.getElementById("nombreProductoP1").value;
-  document.getElementById("nombreProductoP3").value = nombreProducto;
-
-  const previewP2 = document.getElementById("previewImagenP2");
-  const previewP3 = document.getElementById("previewImagenP3");
-  if (previewP2 && previewP2.src) {
-    previewP3.src = previewP2.src;
-    previewP3.style.display = 'block';
+    // Agregar imagen si existe
+    const inputImagen = document.getElementById('inputImagenP2');
+    if (inputImagen && inputImagen.files.length > 0) {
+      formData.append('imagen_producto_cotizada', inputImagen.files[0]);
+    }
+    
+    // Enviar al servidor
+    const response = await fetch('index.php', {
+      method: 'POST',
+      body: formData
+    });
+    
+    // Verificar respuesta
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Error en el servidor');
+    }
+    
+    // Mostrar resultados en modal P3
+    const totalCalculado = (cantidad * valorProducto) + valorDiseño + valorImpresion;
+    const precioTotalP3 = getElement('precioTotalP3');
+    precioTotalP3.value = data.total || totalCalculado.toFixed(2);
+    
+    const nombreProductoP1 = document.getElementById('nombreProductoP1');
+    if (nombreProductoP1) {
+      document.getElementById('nombreProductoP3').value = nombreProductoP1.value;
+    }
+    
+    // Pasar imagen si existe
+    const previewP2 = document.getElementById('previewImagenP2');
+    const previewP3 = document.getElementById('previewImagenP3');
+    if (previewP2 && previewP2.src && previewP3) {
+      previewP3.src = previewP2.src;
+      previewP3.style.display = 'block';
+    }
+    
+    cerrarModalP2();
+    abrirModalP3();
+    
+  } catch (error) {
+    console.error('Error en cotización:', error);
+    alert(error.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
   }
+}
 
-  cerrarModalP2();
-  abrirModalP3();
+// Configurar evento al cargar la página
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.querySelector('.formulario-P2');
+  if (form) {
+    const btn = form.querySelector('button[type="submit"], button:not([type])');
+    if (btn) {
+      btn.addEventListener('click', handleCotizacion);
+    }
+  }
 });
-
 
 //------------- MODAL PAGINA PRINCIPAL 3 -----------------
 
@@ -372,46 +457,12 @@ function mostrarVentanaP3() {
   }, 2000);
 }
 
-document.querySelector('.formulario-P3 button').addEventListener('click', function (e) {
-  e.preventDefault();
-
-  const cantidad = document.getElementById("cantidadProductoP2").value;
-  const valorProducto = document.getElementById("valorProductoOcultoP2").value;
-  const valorDiseño = document.getElementById("valorDiseñoP2").value;
-  const valorImpresion = document.getElementById("valorImpresionP2").value || 0;
-
-  const formData = new FormData();
-  formData.append('cantidad_producto_cotizar', cantidad);
-  formData.append('valor_producto_cotizar', valorProducto);
-  formData.append('valor_diseño_cotizar', valorDiseño);
-  formData.append('valor_impresion_cotizar', valorImpresion);
-
-  const inputImagen = document.getElementById("inputImagenP2");
-  if (inputImagen && inputImagen.files.length > 0) {
-    formData.append('imagen_producto_cotizada', inputImagen.files[0]);
-  }
-
-  fetch("index.php", {
-    method: "POST",
-    body: formData
-  })
-    .then(response => response.text())
-    .then(data => {
-      mostrarVentanaP3();
-      setTimeout(cerrarModalP3, 2000);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Error al enviar la cotización');
-    });
-});
-
 
 //------------- FUNCION PARA BUSCAR PRODUCTO (AJAX) -----------------
 
 function buscarProductoParaCotizar() {
   const nombre = document.getElementById("buscadorCotizar").value.trim();
-
+  
   if (!nombre) {
     alert("Por favor ingresa el nombre del producto.");
     return;
@@ -431,15 +482,11 @@ function buscarProductoParaCotizar() {
 
         document.getElementById("nombreProductoP1").value = data.nombre;
         document.getElementById("valorProductoP1").value = data.valor_producto;
+        document.getElementById("idProductoP1").value = data.id; // Asegurar que se guarda el ID
 
         const preview = document.getElementById("previewImagenP1");
         preview.src = data.imagen_producto;
         preview.style.display = "block";
-
-        const valorProductoP2 = document.getElementById("valorProductoP2");
-        if (valorProductoP2) {
-          valorProductoP2.value = data.valor_producto;
-        }
       }
     })
     .catch(err => {

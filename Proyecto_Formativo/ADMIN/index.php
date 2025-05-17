@@ -1,28 +1,18 @@
 <?php
-
 session_start();
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+
+
+// Redirección si no está logueado
 if (!isset($_SESSION['administrador'])) {
-    // Evita cacheo de esta página
-    header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-    header("Pragma: no-cache");
-    header("Expires: 0");
     header("Location: login.php");
-    exit();
+    exit;
 }
 
-
-if (isset($_GET['success'])) {
-    echo "<script>alert('✅ Producto registrado exitosamente');</script>";
-}
-if (isset($_GET['error'])) {
-    echo "<script>alert('❌ Error al registrar el producto');</script>";
-}
-
+// Manejo de peticiones POST
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    // 🔁 NUEVO: para peticiones AJAX desde JavaScript (buscador con fetch)
+    // Buscar producto por nombre (AJAX)
     if (isset($_POST['ajax_buscar_nombre'])) {
         header('Content-Type: application/json');
         $nombre = trim($_POST['ajax_buscar_nombre']);
@@ -31,230 +21,169 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
 
-    // ✅ AGREGAR PRODUCTO 
-    if (isset($_POST['nombre_producto']) && isset($_POST['valor_producto']) && isset($_FILES['imagen_producto'])) {
+    // Cotizar producto (AJAX)
+    if (
+        isset($_POST['cantidad_producto_cotizar']) &&
+        isset($_POST['valor_producto_cotizar']) &&
+        isset($_POST['valor_diseño_cotizar']) &&
+        isset($_POST['id_producto'])
+    ) {
+        $cantidad = $_POST['cantidad_producto_cotizar'];
+        $valor_producto = $_POST['valor_producto_cotizar'];
+        $valor_diseño = $_POST['valor_diseño_cotizar'];
+        $valor_impresion = isset($_POST['valor_impresion_cotizar']) ? $_POST['valor_impresion_cotizar'] : 0;
+        $id_producto = $_POST['id_producto'];
+        cotizar_productos($cantidad, $valor_producto, $valor_diseño, $valor_impresion, $id_producto);
+        exit;
+    }
+
+    // Agregar producto
+    if (
+        isset($_POST['nombre_producto']) &&
+        isset($_POST['valor_producto']) &&
+        isset($_FILES['imagen_producto'])
+    ) {
         $nombre = $_POST['nombre_producto'];
         $valor = $_POST['valor_producto'];
-        
-        // Guardar imagen
+
         $imagen = '';
         $destino = 'imagenes_productos/';
         if (!file_exists($destino)) {
             mkdir($destino, 0777, true);
         }
+
         $nombreImagen = time() . "_" . basename($_FILES['imagen_producto']['name']);
         $rutaImagen = $destino . $nombreImagen;
 
         if (move_uploaded_file($_FILES['imagen_producto']['tmp_name'], $rutaImagen)) {
             $imagen = $rutaImagen;
         } else {
-            $imagen = 'imagenes_productos/default.webp'; // ruta por defecto
+            $imagen = 'imagenes_productos/default.webp';
         }
 
-        // Guardar producto
         if (agregar_producto($nombre, $valor, $imagen)) {
             header("Location: index.php?success=1");
         } else {
             header("Location: index.php?error=1");
         }
-        exit; // ¡Muy importante!
+        exit;
     }
 
-    // ✅ Modificación desde formulario tradicional
-    if (isset($_POST['id_producto']) && isset($_POST['nuevo_nombre']) && isset($_POST['nuevo_valor'])) {
+    // Modificar producto
+    if (
+        isset($_POST['id_producto']) &&
+        isset($_POST['nuevo_nombre']) &&
+        isset($_POST['nuevo_valor'])
+    ) {
         modificar_producto($_POST['id_producto'], $_POST['nuevo_nombre'], $_POST['nuevo_valor']);
+        exit;
     }
-
-
-    // if(isset($_POST['id_producto']) && isset($_POST['eliminar_nombre']) && isset($_POST['eliminar_valor'])){
-    //     eliminar_producto($_POST['id_producto'], $_POST['eliminado_nombre'], $_POST['eliminado_valor']);
-    // }
-
-    if(isset($_POST['cantidad_producto_cotizar']) && isset($_POST['valor_producto_cotizar']) && isset($_POST['valor_diseño_cotizar']) && isset($_POST['id_producto'])){
-    $cant_prod_cotizar = $_POST['cantidad_producto_cotizar'];
-    $val_prod_cotizar = $_POST['valor_producto_cotizar'];
-    $val_diseño_cotizar = $_POST['valor_diseño_cotizar'];
-    $id_producto = $_POST['id_producto'];  // Nuevo: id del producto cotizado
-
-    cotizar_productos($cant_prod_cotizar, $val_prod_cotizar, $val_diseño_cotizar, $id_producto);
-}
 }
 
-function conectarBD()
-{
-    $conn = new mysqli("localhost", "root", "", "multiservicios_roma");
+// Mostrar alertas al navegar (GET)
+if (isset($_GET['success'])) {
+    echo "<script>alert('✅ Producto registrado exitosamente');</script>";
+}
+if (isset($_GET['error'])) {
+    echo "<script>alert('❌ Error al registrar el producto');</script>";
+}
 
+
+// ================= FUNCIONES =================
+
+function conectarBD() {
+    $conn = new mysqli("localhost", "root", "", "cotizacionesmagicas");
     if ($conn->connect_error) {
         die("Conexión fallida: " . $conn->connect_error);
     }
     return $conn;
 }
 
-function agregar_producto($nombre_producto, $valor_producto,$imagen_producto){
+function agregar_producto($nombre, $valor, $imagen) {
     $conn = conectarBD();
-    $sql = "INSERT INTO productos (nombre, valor_producto, imagen_producto) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        return false;
-    }
-
-    $stmt->bind_param("sds", $nombre_producto, $valor_producto,$imagen_producto);
-
-    $resultado=$stmt->execute();
-
+    $stmt = $conn->prepare("INSERT INTO productos (nombre, valor_producto, imagen_producto) VALUES (?, ?, ?)");
+    $stmt->bind_param("sds", $nombre, $valor, $imagen);
+    $resultado = $stmt->execute();
     $stmt->close();
     $conn->close();
-    
     return $resultado;
 }
 
-function modificar_producto($id, $nuevo_nombre, $nuevo_valor){
+function modificar_producto($id, $nombre, $valor) {
     $conn = conectarBD();
-    $sql = "UPDATE productos SET nombre = ?, valor_producto = ? WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        die("Error al preparar: " . $conn->error);
-    }
-
-    $stmt->bind_param("sdi", $nuevo_nombre, $nuevo_valor, $id);
-
-    if ($stmt->execute()) {
-        echo "<script>alert('\u2705 Producto modificado correctamente');</script>";
-    } else {
-        echo "<script>alert('\u274c Error al modificar: " . $stmt->error . "');</script>";
-    }
-
+    $stmt = $conn->prepare("UPDATE productos SET nombre = ?, valor_producto = ? WHERE id = ?");
+    $stmt->bind_param("sdi", $nombre, $valor, $id);
+    $stmt->execute();
     $stmt->close();
     $conn->close();
 }
 
 function obtener_producto_por_nombre($nombre) {
     $conn = conectarBD();
-    $sql = "SELECT id, nombre, valor_producto,imagen_producto FROM productos WHERE TRIM(nombre) = ?";
-    $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare("SELECT id, nombre, valor_producto, imagen_producto FROM productos WHERE TRIM(nombre) = ?");
     $stmt->bind_param("s", $nombre);
     $stmt->execute();
-    $resultado = $stmt->get_result();
-    $producto = $resultado->fetch_assoc();
+    $res = $stmt->get_result();
+    $producto = $res->fetch_assoc();
     $stmt->close();
     $conn->close();
     return $producto;
 }
 
-// function eliminar_producto($id, $eliminado_nombre, $eliminado_valor){
-//     $conn = conectarBD();
-//     $sql = "UPDATE productos SET nombre = ?, valor_producto = ? WHERE id = ?";
-//     $stmt = $conn->prepare($sql);
-
-//     if (!$stmt) {
-//         die("Error al preparar: " . $conn->error);
-//     }
-
-//     $stmt->bind_param("sdi", $nuevo_nombre, $nuevo_valor, $id);
-
-//     if ($stmt->execute()) {
-//         echo "<script>alert('\u2705 Producto modificado correctamente');</script>";
-//     } else {
-//         echo "<script>alert('\u274c Error al modificar: " . $stmt->error . "');</script>";
-//     }
-
-//     $stmt->close();
-//     $conn->close();
-// }
-
-
-
-
-function cotizar_productos($cant_prod_cotizar, $val_prod_cotizar, $val_diseño_cotizar, $id_producto){
+function cotizar_productos($cantidad, $valor_producto, $valor_diseño, $valor_impresion, $id_producto) {
+    header('Content-Type: application/json');
     $conn = conectarBD();
-
-    error_log("📌 Iniciando cotizar_productos()");
-
-    // Validar que los valores sean numéricos
-    if (!is_numeric($cant_prod_cotizar) || !is_numeric($val_prod_cotizar) || !is_numeric($val_diseño_cotizar)) {
-        error_log("❌ Error: Valores no numéricos recibidos");
-        echo "<script>alert('❌ Error: Los valores deben ser numéricos');</script>";
-        return false;
+    
+    // Validaciones básicas
+    if (!isset($_SESSION['administrador'])) {
+        return json_encode(['success' => false, 'error' => 'Usuario no autenticado']);
     }
 
-    // Convertir valores a los tipos correctos
-    $cant_prod_cotizar = (int)$cant_prod_cotizar;
-    $val_prod_cotizar = (float)$val_prod_cotizar;
-    $val_diseño_cotizar = (float)$val_diseño_cotizar;
+    // Validar datos numéricos
+    if (!is_numeric($cantidad) || $cantidad <= 0 || 
+        !is_numeric($valor_producto) || $valor_producto <= 0 || 
+        !is_numeric($valor_diseño) || $valor_diseño < 0) {
+        return json_encode(['success' => false, 'error' => 'Datos inválidos']);
+    }
 
-    // Calcular subtotal y total
-    $subtotal = $cant_prod_cotizar * $val_prod_cotizar;
-    $total = $subtotal + $val_diseño_cotizar;
-
-    error_log("✔️ Valores numéricos convertidos correctamente");
-    error_log("➡️ Subtotal: $subtotal, Total: $total");
-
-    // Fecha actual
+    $valor_impresion = is_numeric($valor_impresion) ? max(0, $valor_impresion) : 0;
+    $id_usuario = $_SESSION['administrador'];
+    $subtotal = $cantidad * $valor_producto;
+    $total = $subtotal + $valor_diseño + $valor_impresion;
     $fecha = date("Y-m-d");
 
-    // Verificar que el usuario esté autenticado
-    if (!isset($_SESSION['administrador'])) {
-        error_log("❌ Error: Usuario no autenticado");
-        echo "<script>alert('❌ Error: Usuario no autenticado');</script>";
-        return false;
-    }
+    try {
+        $conn->begin_transaction();
 
-    $id_usuario = $_SESSION['administrador'];
-    error_log("👤 ID usuario autenticado: $id_usuario");
-
-    // Insertar en tabla cotizaciones
-    $sql = "INSERT INTO cotizaciones (fecha, id_usuario, total) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        error_log("❌ Error preparando consulta cotizaciones: " . $conn->error);
-        echo "<script>alert('❌ Error preparando cotización: " . addslashes($conn->error) . "');</script>";
-        return false;
-    }
-
-    $stmt->bind_param("sid", $fecha, $id_usuario, $total);
-
-    if ($stmt->execute()) {
+        // Insertar cotización
+        $stmt = $conn->prepare("INSERT INTO cotizaciones (fecha, id_usuario, total) VALUES (?, ?, ?)");
+        $stmt->bind_param("sid", $fecha, $id_usuario, $total);
+        $stmt->execute();
         $id_cotizacion = $conn->insert_id;
         $stmt->close();
-        error_log("✅ Cotización registrada con ID: $id_cotizacion");
 
-        // Insertar en detalle_cotizacion
-        $sql_detalle = "INSERT INTO detalle_cotizacion (id_cotizacion, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)";
-        $stmt_detalle = $conn->prepare($sql_detalle);
+        // Insertar detalle
+        $stmt = $conn->prepare("INSERT INTO detalle_cotizacion 
+                              (id_cotizacion, id_producto, cantidad, precio_unitario, subtotal) 
+                              VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("iiidd", $id_cotizacion, $id_producto, $cantidad, $valor_producto, $subtotal);
+        $stmt->execute();
+        $stmt->close();
 
-        if (!$stmt_detalle) {
-            error_log("❌ Error preparando detalle cotización: " . $conn->error);
-            echo "<script>alert('❌ Error preparando detalle: " . addslashes($conn->error) . "');</script>";
-            return false;
-        }
+        $conn->commit();
+        
+        return json_encode(['success' => true, 'message' => 'Cotización exitosa', 'total' => $total]);
 
-        $stmt_detalle->bind_param("iiidd", $id_cotizacion, $id_producto, $cant_prod_cotizar, $val_prod_cotizar, $subtotal);
-
-        if ($stmt_detalle->execute()) {
-            $stmt_detalle->close();
-            $conn->close();
-            error_log("✅ Detalle de cotización registrado exitosamente");
-            echo "<script>alert('✅ Cotización y detalle registrados correctamente');</script>";
-            return true;
-        } else {
-            error_log("❌ Error ejecutando detalle_cotizacion: " . $stmt_detalle->error);
-            echo "<script>alert('❌ Error al registrar detalle cotización: " . addslashes($stmt_detalle->error) . "');</script>";
-            return false;
-        }
-    } else {
-        error_log("❌ Error ejecutando cotización: " . $stmt->error);
-        echo "<script>alert('❌ Error al registrar la cotización: " . addslashes($stmt->error) . "');</script>";
-        return false;
+    } catch (Exception $e) {
+        $conn->rollback();
+        return json_encode(['success' => false, 'error' => 'Error al guardar: '.$e->getMessage()]);
+    } finally {
+        $conn->close();
     }
 }
-
-
-
-
 ?>
+
+
 
 
 
@@ -492,7 +421,7 @@ function cotizar_productos($cant_prod_cotizar, $val_prod_cotizar, $val_diseño_c
                 <span class="back-arrow" onclick="cerrarModalP2()">&larr;</span>
             </div>
             <div class="modal-bodyP2">
-                <form method="POST" class="formulario-P2" id="formularioCotizarP2" enctype="multipart/form-data">
+                <form method="POST" class="formulario-P2" id="formularioCotizarP2" enctype="multipart/form-data" onsubmit="return false;">
                     <div class="imagen-boxP2">
                         <input name="imagen_producto_cotizada" type="file" id="inputImagenP2" onchange="mostrarImagenP2(event)">
                         <img id="previewImagenP2" style="display: none;">                
@@ -511,10 +440,10 @@ function cotizar_productos($cant_prod_cotizar, $val_prod_cotizar, $val_diseño_c
                     </div>
 
                     <!-- Campo oculto para enviar el valor del producto -->
-                    <input type="hidden" name="valor_producto_cotizar" id="valorProductoOcultoP2" value="">
+                    <input type="hidden" name="valor_producto_cotizar" id="valorProductoOcultoP2" >
 
                     <!-- Campo oculto NUEVO para enviar el id del producto -->
-                    <input type="hidden" name="id_producto" id="idProductoOcultoP2" value="">
+                    <input type="hidden" name="id_producto" id="idProductoOcultoP2" >
 
                     <button type="submit">Cotizar</button>
                 </form>
@@ -542,7 +471,7 @@ function cotizar_productos($cant_prod_cotizar, $val_prod_cotizar, $val_diseño_c
                         <label for="precioTotalP3">Precio Total</label>
                         <input type="number" id="precioTotalP3" placeholder="" readonly>
                     </div> 
-                    <button type="submit">Cotizar</button>
+                    <button type="button"  onclick="cerrarModalP3()">Cotizar</button>
                 </form>
                 <div class="ventana-emergenteP3" id="ventanaEmergenteP3" style="display:none;">
                     <div class="ventana-contenidoP3">
