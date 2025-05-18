@@ -129,58 +129,75 @@ function obtener_producto_por_nombre($nombre) {
     $conn->close();
     return $producto;
 }
-
 function cotizar_productos($cantidad, $valor_producto, $valor_diseño, $valor_impresion, $id_producto) {
     header('Content-Type: application/json');
     $conn = conectarBD();
-    
-    // Validaciones básicas
+
     if (!isset($_SESSION['administrador'])) {
-        return json_encode(['success' => false, 'error' => 'Usuario no autenticado']);
+        echo json_encode(['success' => false, 'error' => 'Usuario no autenticado']);
+        return;
     }
 
-    // Validar datos numéricos
-    if (!is_numeric($cantidad) || $cantidad <= 0 || 
-        !is_numeric($valor_producto) || $valor_producto <= 0 || 
+    $id_usuario = 1; // Asumimos que aquí está el ID correcto
+
+    // Verificar que el usuario existe en la base de datos
+    $stmt = $conn->prepare("SELECT id FROM usuarios WHERE id = ?");
+    $stmt->bind_param("i", $id_usuario);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+
+    if ($resultado->num_rows === 0) {
+        echo json_encode(['success' => false, 'error' => 'ID de usuario inválido']);
+        $stmt->close();
+        $conn->close();
+        return;
+    }
+    $stmt->close();
+
+    // Validaciones numéricas
+    if (!is_numeric($cantidad) || $cantidad <= 0 ||
+        !is_numeric($valor_producto) || $valor_producto <= 0 ||
         !is_numeric($valor_diseño) || $valor_diseño < 0) {
-        return json_encode(['success' => false, 'error' => 'Datos inválidos']);
+        echo json_encode(['success' => false, 'error' => 'Datos inválidos']);
+        $conn->close();
+        return;
     }
 
     $valor_impresion = is_numeric($valor_impresion) ? max(0, $valor_impresion) : 0;
-    $id_usuario = $_SESSION['administrador'];
     $subtotal = $cantidad * $valor_producto;
     $total = $subtotal + $valor_diseño + $valor_impresion;
     $fecha = date("Y-m-d");
 
-    try {
-        $conn->begin_transaction();
+    // Insertar cotización
+    $stmt = $conn->prepare("INSERT INTO cotizaciones (fecha, id_usuario, total) VALUES (?, ?, ?)");
+    $stmt->bind_param("sid", $fecha, $id_usuario, $total);
 
-        // Insertar cotización
-        $stmt = $conn->prepare("INSERT INTO cotizaciones (fecha, id_usuario, total) VALUES (?, ?, ?)");
-        $stmt->bind_param("sid", $fecha, $id_usuario, $total);
-        $stmt->execute();
-        $id_cotizacion = $conn->insert_id;
+    if ($stmt->execute()) {
+        $id_cotizacion = $stmt->insert_id; // Obtener el id generado
+
         $stmt->close();
 
-        // Insertar detalle
-        $stmt = $conn->prepare("INSERT INTO detalle_cotizacion 
-                              (id_cotizacion, id_producto, cantidad, precio_unitario, subtotal) 
-                              VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("iiidd", $id_cotizacion, $id_producto, $cantidad, $valor_producto, $subtotal);
-        $stmt->execute();
-        $stmt->close();
+        // Insertar detalle de cotización
+        $stmt_detalle = $conn->prepare("INSERT INTO detalle_cotizacion (id_cotizacion, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)");
+        $stmt_detalle->bind_param("iiidd", $id_cotizacion, $id_producto, $cantidad, $valor_producto, $subtotal);
 
-        $conn->commit();
-        
-        return json_encode(['success' => true, 'message' => 'Cotización exitosa', 'total' => $total]);
+        if ($stmt_detalle->execute()) {
+            echo json_encode(['success' => true, 'message' => 'Cotización y detalle registrados', 'total' => $total]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Error al registrar detalle de cotización']);
+        }
 
-    } catch (Exception $e) {
-        $conn->rollback();
-        return json_encode(['success' => false, 'error' => 'Error al guardar: '.$e->getMessage()]);
-    } finally {
-        $conn->close();
+        $stmt_detalle->close();
+
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Error al registrar la cotización']);
     }
+
+    $conn->close();
 }
+
+
+
 ?>
 
 

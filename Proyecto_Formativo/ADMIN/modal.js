@@ -289,135 +289,73 @@ document.querySelector('.formulario-P1 button').addEventListener('click', functi
 
 // ------------- MODAL PAGINA PRINCIPAL 2 -----------------
 function abrirModalP2() {
-  document.getElementById('modalPrincipal2').classList.add('active');
+    document.getElementById('modalPrincipal2').classList.add('active');
 }
 
 function cerrarModalP2() {
-  document.getElementById('modalPrincipal2').classList.remove('active');
+    document.getElementById('modalPrincipal2').classList.remove('active');
 }
 
 function mostrarImagenP2(event) {
-  const file = event.target.files[0];
-  const preview = document.getElementById('previewImagenP2');
-  if (file && preview) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      preview.src = e.target.result;
-      preview.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-  }
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const preview = document.getElementById('previewImagenP2');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
 }
 
 async function handleCotizacion(e) {
-  e.preventDefault();
-  
-  const btn = e.target;
-  const originalText = btn.innerHTML;
-  
-  try {
-    // Estado de carga
+    e.preventDefault();
+
+    const btn = e.target;
+    const originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-    
-    // Obtener elementos del DOM con verificación de existencia
-    const getElement = (id) => {
-      const el = document.getElementById(id);
-      if (!el) throw new Error(`Elemento con ID ${id} no encontrado`);
-      return el;
-    };
 
-    const cantidadInput = getElement('cantidadProductoP2');
-    const diseñoInput = getElement('valorDiseñoP2');
-    const valorProductoInput = getElement('valorProductoOcultoP2');
-    const idProductoInput = getElement('idProductoOcultoP2');
-    const impresionInput = document.getElementById('valorImpresionP2'); // Opcional
-    
-    // Validación de valores
-    const cantidad = parseFloat(cantidadInput.value);
-    const valorDiseño = parseFloat(diseñoInput.value) || 0;
-    const valorProducto = parseFloat(valorProductoInput.value);
-    const idProducto = idProductoInput.value;
-    const valorImpresion = impresionInput ? parseFloat(impresionInput.value) || 0 : 0;
+    try {
+        const getValue = id => document.getElementById(id).value;
+        const parseNum = id => parseFloat(getValue(id)) || 0;
 
-    if (isNaN(cantidad) || cantidad <= 0) {
-      throw new Error('Ingrese una cantidad válida (mayor que 0)');
-    }
-    
-    if (isNaN(valorDiseño) || valorDiseño < 0) {
-      throw new Error('Ingrese un valor de diseño válido');
-    }
+        const cantidad = parseNum('cantidadProductoP2');
+        const valorDiseño = parseNum('valorDiseñoP2');
+        const valorProducto = parseNum('valorProductoOcultoP2');
+        const valorImpresion = parseNum('valorImpresionP2');
+        const idProducto = getValue('idProductoOcultoP2');
 
-    // Preparar datos
-    const formData = new FormData();
-    formData.append('cantidad_producto_cotizar', cantidad);
-    formData.append('valor_producto_cotizar', valorProducto);
-    formData.append('valor_diseño_cotizar', valorDiseño);
-    formData.append('valor_impresion_cotizar', valorImpresion);
-    formData.append('id_producto', idProducto);
+        if (cantidad <= 0) throw new Error('Ingrese una cantidad válida (mayor que 0)');
+        if (valorDiseño < 0) throw new Error('Ingrese un valor de diseño válido');
 
-    // Agregar imagen si existe
-    const inputImagen = document.getElementById('inputImagenP2');
-    if (inputImagen && inputImagen.files.length > 0) {
-      formData.append('imagen_producto_cotizada', inputImagen.files[0]);
+        const formData = new FormData();
+        formData.append('cantidad_producto_cotizar', cantidad);
+        formData.append('valor_producto_cotizar', valorProducto);
+        formData.append('valor_diseño_cotizar', valorDiseño);
+        formData.append('valor_impresion_cotizar', valorImpresion);
+        formData.append('id_producto', idProducto);
+
+        const res = await fetch('index.php', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (!data.success) throw new Error(data.error || 'Error en el servidor');
+
+        // Aquí podrías mostrar el modalP3 si todo sale bien
+        // abrirModalP3(); (solo si ya tienes la función hecha)
+
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
-    
-    // Enviar al servidor
-    const response = await fetch('index.php', {
-      method: 'POST',
-      body: formData
-    });
-    
-    // Verificar respuesta
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    if (!data.success) {
-      throw new Error(data.error || 'Error en el servidor');
-    }
-    
-    // Mostrar resultados en modal P3
-    const totalCalculado = (cantidad * valorProducto) + valorDiseño + valorImpresion;
-    const precioTotalP3 = getElement('precioTotalP3');
-    precioTotalP3.value = data.total || totalCalculado.toFixed(2);
-    
-    const nombreProductoP1 = document.getElementById('nombreProductoP1');
-    if (nombreProductoP1) {
-      document.getElementById('nombreProductoP3').value = nombreProductoP1.value;
-    }
-    
-    // Pasar imagen si existe
-    const previewP2 = document.getElementById('previewImagenP2');
-    const previewP3 = document.getElementById('previewImagenP3');
-    if (previewP2 && previewP2.src && previewP3) {
-      previewP3.src = previewP2.src;
-      previewP3.style.display = 'block';
-    }
-    
-    cerrarModalP2();
-    abrirModalP3();
-    
-  } catch (error) {
-    console.error('Error en cotización:', error);
-    alert(error.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = originalText;
-  }
 }
 
-// Configurar evento al cargar la página
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector('.formulario-P2');
-  if (form) {
-    const btn = form.querySelector('button[type="submit"], button:not([type])');
-    if (btn) {
-      btn.addEventListener('click', handleCotizacion);
-    }
-  }
+    const btn = document.querySelector('.formulario-P2 button[type="submit"]');
+    if (btn) btn.addEventListener('click', handleCotizacion);
 });
 
 //------------- MODAL PAGINA PRINCIPAL 3 -----------------
