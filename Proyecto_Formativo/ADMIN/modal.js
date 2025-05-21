@@ -263,13 +263,15 @@ function cerrarModalP1() {
 function mostrarImagenP1(event) {
   const file = event.target.files[0];
   const preview = document.getElementById('previewImagenP1');
-  if (file) {
+  if (file && file.type.startsWith('image/')) {
     const reader = new FileReader();
     reader.onload = function (e) {
       preview.src = e.target.result;
       preview.style.display = 'block';
     };
     reader.readAsDataURL(file);
+  } else {
+    alert("Selecciona una imagen válida");
   }
 }
 
@@ -344,6 +346,12 @@ async function handleCotizacion(e) {
 
         // Aquí podrías mostrar el modalP3 si todo sale bien
         // abrirModalP3(); (solo si ya tienes la función hecha)
+        document.getElementById('nombreProductoP3').value = data.nombre_producto || 'Sin nombre';
+        document.getElementById('precioTotalP3').value = data.total || 0;
+
+        cerrarModalP2();
+        abrirModalP3();
+        mostrarVentanaP3();
 
     } catch (error) {
         alert(error.message);
@@ -356,6 +364,11 @@ async function handleCotizacion(e) {
 document.addEventListener("DOMContentLoaded", () => {
     const btn = document.querySelector('.formulario-P2 button[type="submit"]');
     if (btn) btn.addEventListener('click', handleCotizacion);
+
+    const inputImagenP1 = document.getElementById("inputImagenP1");
+    if (inputImagenP1) {
+        inputImagenP1.addEventListener("change", mostrarImagenP1);
+    }
 });
 
 //------------- MODAL PAGINA PRINCIPAL 3 -----------------

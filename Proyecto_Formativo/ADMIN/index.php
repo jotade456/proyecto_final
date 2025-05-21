@@ -173,8 +173,7 @@ function cotizar_productos($cantidad, $valor_producto, $valor_diseño, $valor_im
     $stmt->bind_param("sid", $fecha, $id_usuario, $total);
 
     if ($stmt->execute()) {
-        $id_cotizacion = $stmt->insert_id; // Obtener el id generado
-
+        $id_cotizacion = $conn->insert_id;
         $stmt->close();
 
         // Insertar detalle de cotización
@@ -182,28 +181,39 @@ function cotizar_productos($cantidad, $valor_producto, $valor_diseño, $valor_im
         $stmt_detalle->bind_param("iiidd", $id_cotizacion, $id_producto, $cantidad, $valor_producto, $subtotal);
 
         if ($stmt_detalle->execute()) {
-            echo json_encode(['success' => true, 'message' => 'Cotización y detalle registrados', 'total' => $total]);
+            $stmt_detalle->close();
+
+            // Obtener el nombre del producto
+            $stmt_producto = $conn->prepare("SELECT nombre, imagen_producto FROM productos WHERE id = ?");
+            $stmt_producto->bind_param("i", $id_producto);
+            $stmt_producto->execute();
+            $res_producto = $stmt_producto->get_result();
+            $producto = $res_producto->fetch_assoc();
+            $stmt_producto->close();
+
+            $nombre_producto = $producto ? $producto['nombre'] : 'Producto desconocido';
+            $imagen_producto = $producto ? $producto['imagen_producto'] : 'imagenes_productos/default.webp';
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Cotización y detalle registrados',
+                'total' => $total,
+                'nombre_producto' => $nombre_producto,
+                'imagen_producto' => $imagen_producto
+            ]);
         } else {
             echo json_encode(['success' => false, 'error' => 'Error al registrar detalle de cotización']);
+            $stmt_detalle->close();
         }
-
-        $stmt_detalle->close();
-
     } else {
         echo json_encode(['success' => false, 'error' => 'Error al registrar la cotización']);
+        $stmt->close();
     }
 
     $conn->close();
 }
 
-
-
 ?>
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -212,10 +222,10 @@ function cotizar_productos($cantidad, $valor_producto, $valor_diseño, $valor_im
     <title>Document</title>
     <link rel="stylesheet" href="estilos.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script
+    <script>
     src="https://kit.fontawesome.com/81581fb069.js"
     crossorigin="anonymous"
-></script>
+    </script>
 </head>
 
 <body>
