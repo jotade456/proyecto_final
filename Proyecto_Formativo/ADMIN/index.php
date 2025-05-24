@@ -1,8 +1,6 @@
 <?php
 session_start();
 
-
-
 // Redirección si no está logueado
 if (!isset($_SESSION['administrador'])) {
     header("Location: login.php");
@@ -76,6 +74,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         isset($_POST['nuevo_valor'])
     ) {
         modificar_producto($_POST['id_producto'], $_POST['nuevo_nombre'], $_POST['nuevo_valor']);
+        exit;
+    }
+
+    // Eliminar (inhabilitar) producto
+    if (isset($_POST['eliminar_producto'])) {
+        $id_producto = $_POST['eliminar_producto'];
+        if (eliminar_producto($id_producto)) {
+            echo json_encode(['success' => true, 'message' => 'Producto eliminado correctamente']);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Error al eliminar el producto']);
+        }
         exit;
     }
 }
@@ -210,7 +219,17 @@ function cotizar_productos($cantidad, $valor_producto, $valor_diseño, $valor_im
         $stmt->close();
     }
 
+
     $conn->close();
+}
+function eliminar_producto($id_producto) {
+    $conn = conectarBD();
+    $stmt = $conn->prepare("UPDATE productos SET estado = 'inactivo' WHERE id = ?");
+    $stmt->bind_param("i", $id_producto);
+    $resultado = $stmt->execute();
+    $stmt->close();
+    $conn->close();
+    return $resultado;
 }
 
 ?>
@@ -383,14 +402,14 @@ function cotizar_productos($cantidad, $valor_producto, $valor_diseño, $valor_im
                 <span class="back-arrow" onclick="cerrarModalEli()">&larr;</span>
                 <h2>Eliminar Producto</h2>
             </div>
-            <div class="modal-body-eli">
+            <div class="modal-body-eli" id="modaleliminar">
                 <div class="imagen-box-eli" onclick="document.getElementById('inputImagen-eli').click();">
                     <input type="file" id="inputImagen-eli" onchange="mostrarImagenEli(event)">
                     <img id="previewImagen-eli" style="display: none;">                
                     <p>Eliminar Imagen</p>
                 </div>
                 <form class="formulario-producto-eli" method="POST" action="index.php">
-                    <input type="hidden" name="id_producto" id="idProducto-eli">
+                    <input type="hidden" name="eliminar_producto" id="idProducto-eli">
                     <input name="eliminar_nombre" type="text" id="nombreProducto-eli" placeholder="Eliminar Nombre" required>
                     <input name="eliminar_valor" type="number" id="valorProducto-eli" placeholder="Eliminar Valor" required>
                     <button type="submit">Eliminar</button>
