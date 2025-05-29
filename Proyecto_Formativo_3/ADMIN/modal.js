@@ -1,0 +1,466 @@
+//------------------------MODAL AGREGAR PRODUCTO ---------------------
+function abrirModal() {
+  document.getElementById('modalProducto').classList.add('active');
+}
+
+function cerrarModal() {
+  document.getElementById('modalProducto').classList.remove('active');
+  limpiarFormularioProducto();
+}
+
+// Limpiar imagen e inputs
+function limpiarFormularioProducto() {
+  const preview = document.getElementById('previewImagen');
+  const inputImagen = document.getElementById('inputImagen');
+  const inputNombre = document.getElementById('nombreProducto');
+  const inputValor = document.getElementById('valorProducto');
+
+  preview.src = '';
+  preview.style.display = 'none';
+  inputImagen.value = '';
+  inputNombre.value = '';
+  inputValor.value = '';
+}
+
+// Mostrar vista previa de imagen
+function mostrarImagen(event) {
+  const file = event.target.files[0];
+  const preview = document.getElementById('previewImagen');
+  if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+  }
+}
+
+// Mostrar ventana emergente con animación
+function mostrarVentana() {
+  const ventana = document.getElementById('ventanaEmergente');
+  ventana.style.display = 'flex';
+  ventana.classList.remove('desapareciendo-');
+
+  setTimeout(() => {
+      ventana.classList.add('desapareciendo');
+      setTimeout(() => {
+          ventana.style.display = 'none';
+          ventana.classList.remove('desapareciendo');
+      }, 300);
+  }, 2000);
+}
+
+
+
+
+
+//------------------------MODAL MODIFICAR PRODUCTO ---------------------
+
+function abrirModalModificar() {
+  document.getElementById('modalmodificar').classList.add('active');
+}
+
+function cerrarModalModificar() {
+  document.getElementById('modalmodificar').classList.remove('active');
+  limpiarBuscadorModificar();
+}
+
+function limpiarBuscadorModificar() {
+  const inputModificar = document.querySelector('.modal-modificar input[type="text"]');
+  const sugerenciasModificar = document.querySelector('.modal-modificar .contenedor-sugerencias');
+
+  if (inputModificar) inputModificar.value = '';
+  if (sugerenciasModificar) sugerenciasModificar.innerHTML = '';
+}
+
+
+function abrirModalMod() {
+  document.getElementById('modalProductoModificar').classList.add('active');
+}
+
+function cerrarModalMod() {
+  document.getElementById('modalProductoModificar').classList.remove('active');
+  limpiarFormularioProducto();
+}
+
+
+function mostrarImagenMod(event) {
+  const file = event.target.files[0];
+  const preview = document.getElementById('previewImagen-mod');
+  if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+  }
+}
+
+function mostrarVentanaModificar() {
+  const ventana = document.getElementById('ventanaEmergenteModificar');
+  ventana.style.display = 'flex';
+  ventana.classList.remove('desapareciendo-mod');
+
+  setTimeout(() => {
+      ventana.classList.add('desapareciendo-mod');
+      setTimeout(() => {
+          ventana.style.display = 'none';
+          ventana.classList.remove('desapareciendo-mod');
+      }, 300);
+  }, 2000);
+}
+
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const formBuscar = document.querySelector("#modalmodificar form");
+
+  if (formBuscar) {
+      formBuscar.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const nombre = document.getElementById("inputBuscarModificar").value.trim();
+
+          fetch("index.php", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/x-www-form-urlencoded"
+              },
+              body: `ajax_buscar_nombre=${encodeURIComponent(nombre)}`
+          })
+          .then(res => res.json())
+          .then(data => {
+              if (data.error) {
+                  alert("❌ " + data.error);
+              } else {
+                  document.getElementById("idProducto-mod").value = data.id;
+                  document.getElementById("nombreProducto-mod").value = data.nombre;
+                  document.getElementById("valorProducto-mod").value = data.valor_producto;
+                  // mostrar la imagen actual del producto
+                  const previewImagen = document.getElementById("previewImagen-mod");
+                  previewImagen.src = data.imagen_producto;
+                  previewImagen.style.display = "block";
+                  document.getElementById("modalProductoModificar").classList.add("active");
+              }
+          })
+          .catch(err => {
+              console.error(err);
+              alert("❌ Error al buscar producto");
+          });
+      });
+  }
+});
+
+
+
+//------------------------MODAL ELIMINAR PRODUCTO ---------------------
+
+function abrirModalEliminar() {
+  document.getElementById('modaleliminar').classList.add('active');
+}
+
+function cerrarModalEliminar() {
+  document.getElementById('modaleliminar').classList.remove('active');
+  limpiarBuscadorEliminar();
+}
+
+function limpiarBuscadorEliminar() {
+  const inputEliminar = document.querySelector('.modal-eliminar input[type="text"]');
+  const sugerenciasEliminar = document.querySelector('.modal-eliminar .contenedor-sugerencias-eliminar');
+
+  if (inputEliminar) inputEliminar.value = '';
+  if (sugerenciasEliminar) sugerenciasEliminar.innerHTML = '';
+}
+
+
+function abrirModalEli() {
+  document.getElementById('modalProductoEliminar').classList.add('active');
+}
+
+function cerrarModalEli() {
+  document.getElementById('modalProductoEliminar').classList.remove('active');
+  limpiarFormularioProducto();
+}
+
+
+function mostrarImagenEli(event) {
+  const file = event.target.files[0];
+  const preview = document.getElementById('previewImagen-eli');
+  if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+  }
+}
+
+function mostrarVentanaEliminar() {
+  const ventana = document.getElementById('ventanaEmergenteEliminar');
+  ventana.style.display = 'flex';
+  ventana.classList.remove('desapareciendo-eli');
+
+  setTimeout(() => {
+      ventana.classList.add('desapareciendo-eli');
+      setTimeout(() => {
+          ventana.style.display = 'none';
+          ventana.classList.remove('desapareciendo-eli');
+      }, 300);
+  }, 2000);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const formBuscar = document.querySelector("#modaleliminar form");
+
+  if (formBuscar) {
+      formBuscar.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const nombre = document.getElementById("inputBuscarEliminar").value.trim();
+
+          fetch("index.php", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/x-www-form-urlencoded"
+              },
+              body: `ajax_buscar_nombre=${encodeURIComponent(nombre)}`
+          })
+          .then(res => res.json())
+          .then(data => {
+              if (data.error) {
+                  alert("❌ " + data.error);
+              } else {
+                  document.getElementById("idProducto-eli").value = data.id;
+                  document.getElementById("nombreProducto-eli").value = data.nombre;
+                  document.getElementById("valorProducto-eli").value = data.valor_producto;
+                  document.getElementById("modalProductoEliminar").classList.add("active");
+              }
+          })
+          .catch(err => {
+              console.error(err);
+              alert("❌ Error al buscar producto");
+          });
+      });
+  }
+});
+
+
+
+//------------- MODAL PAGINA PRINCIPAL 1 -----------------
+
+function abrirModalP1() {
+  document.getElementById('modalPrincipal1').classList.add('active');
+}
+
+function cerrarModalP1() {
+  document.getElementById('modalPrincipal1').classList.remove('active');
+}
+
+function mostrarImagenP1(event) {
+  const file = event.target.files[0];
+  const preview = document.getElementById('previewImagenP1');
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// Botón dentro del formulario P1, evita submit y abre modal 2
+document.querySelector('.formulario-P1 button').addEventListener('click', function (e) {
+  e.preventDefault();
+  const valorP1 = document.getElementById("valorProductoP1").value;
+  const idProducto = document.getElementById("idProductoP1").value;
+  
+  document.getElementById("valorProductoOcultoP2").value = valorP1;
+  document.getElementById("idProductoOcultoP2").value = idProducto; // Pasar el ID
+
+  cerrarModalP1();
+  abrirModalP2();
+});
+
+
+// ------------- MODAL PAGINA PRINCIPAL 2 -----------------
+function abrirModalP2() {
+    document.getElementById('modalPrincipal2').classList.add('active');
+}
+
+function cerrarModalP2() {
+    document.getElementById('modalPrincipal2').classList.remove('active');
+}
+
+function mostrarImagenP2(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const preview = document.getElementById('previewImagenP2');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+
+async function handleCotizacion(e) {
+    e.preventDefault();
+
+    const btn = e.target;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+    try {
+        const getValue = id => document.getElementById(id).value;
+        const parseNum = id => parseFloat(getValue(id)) || 0;
+
+        const cantidad = parseNum('cantidadProductoP2');
+        const valorDiseño = parseNum('valorDiseñoP2');
+        const valorProducto = parseNum('valorProductoOcultoP2');
+        const valorImpresion = parseNum('valorImpresionP2');
+        const idProducto = getValue('idProductoOcultoP2');
+
+        if (cantidad <= 0) throw new Error('Ingrese una cantidad válida (mayor que 0)');
+        if (valorDiseño < 0) throw new Error('Ingrese un valor de diseño válido');
+
+        const formData = new FormData();
+        formData.append('cantidad_producto_cotizar', cantidad);
+        formData.append('valor_producto_cotizar', valorProducto);
+        formData.append('valor_diseño_cotizar', valorDiseño);
+        formData.append('valor_impresion_cotizar', valorImpresion);
+        formData.append('id_producto', idProducto);
+
+        const res = await fetch('index.php', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (!data.success) throw new Error(data.error || 'Error en el servidor');
+
+        const nombreProducto = document.getElementById('nombreProductoP1').value;
+        const total = data.total;
+
+        // Usar función separada para mostrar resultados
+        mostrarResultadoCotizacionEnModal3(nombreProducto, total);
+        abrirModalP3();
+
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector('.formulario-P2');
+    if (form) form.addEventListener('submit', handleCotizacion);
+});
+
+
+//------------- MODAL PAGINA PRINCIPAL 3 -----------------
+
+function abrirModalP3() {
+  document.getElementById('modalPrincipal3').classList.add('active');
+}
+
+function cerrarModalP3() {
+  document.getElementById('modalPrincipal3').classList.remove('active');
+}
+
+function mostrarImagenP3(event) {
+  const file = event.target.files[0];
+  const preview = document.getElementById('previewImagenP3');
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function mostrarVentanaP3() {
+  const ventana = document.getElementById('ventanaEmergenteP3');
+  ventana.style.display = 'flex';
+  ventana.classList.remove('desapareciendo');
+
+  setTimeout(() => {
+    ventana.classList.add('desapareciendo');
+    setTimeout(() => {
+      ventana.style.display = 'none';
+      ventana.classList.remove('desapareciendo');
+    }, 300);
+  }, 2000);
+}
+
+function mostrarResultadoCotizacionEnModal3(nombreProducto, total) {
+    const inputNombre = document.getElementById('nombreProductoP3');
+    const inputTotal = document.getElementById('precioTotalP3');
+
+    inputNombre.value = nombreProducto;
+    inputTotal.value = parseFloat(total).toFixed(2); // Mostrar siempre con 2 decimales
+}
+
+
+//------------- FUNCION PARA BUSCAR PRODUCTO (AJAX) -----------------
+
+function buscarProductoParaCotizar() {
+  const nombre = document.getElementById("buscadorCotizar").value.trim();
+  
+  if (!nombre) {
+    alert("Por favor ingresa el nombre del producto.");
+    return;
+  }
+
+  fetch("index.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `ajax_buscar_nombre=${encodeURIComponent(nombre)}`
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        alert("❌ " + data.error);
+      } else {
+        abrirModalP1();
+
+        document.getElementById("nombreProductoP1").value = data.nombre;
+        document.getElementById("valorProductoP1").value = data.valor_producto;
+        document.getElementById("idProductoP1").value = data.id; // Asegurar que se guarda el ID
+
+        const preview = document.getElementById("previewImagenP1");
+        preview.src = data.imagen_producto;
+        preview.style.display = "block";
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("❌ Error al buscar producto");
+    });
+}
+
+
+
+//------------- MODAL HISTORIAL DE COTIZACIONES -----------------
+
+function abrirModalHistorial() {
+  document.getElementById('modalHistorial').classList.add('active');
+}
+
+function cerrarModalHistorial() {
+  document.getElementById('modalHistorial').classList.remove('active');
+}
+
+function descargarPDF(numero) {
+  alert(`Descargando Cotización ${numero} en PDF...`);
+}
