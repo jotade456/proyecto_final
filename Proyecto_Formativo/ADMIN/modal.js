@@ -452,7 +452,34 @@ function buscarProductoParaCotizar() {
 
 function abrirModalHistorial() {
   document.getElementById('modalHistorial').classList.add('active');
+
+  fetch('historial.php')
+    .then(function(res) { return res.json(); })
+    .then(function(historial) {
+      var contenedor = document.getElementById('historial');
+      contenedor.innerHTML = historial.length
+        ? historial.map(function(item) {
+            return `
+              <div class="tarjeta-cotizacion">
+                <p class="titulo-cotizacion"><strong>Cotización</strong> ${item.id}</p>
+                <p class="id-usuario"><strong>ID Usuario:</strong> ${item.id_usuario}</p>
+                <p><strong>Fecha:</strong> ${item.fecha}</p>
+                <p><strong>Producto:</strong> ${item.nombre_producto}</p>
+                <p><strong>Cantidad:</strong> ${item.cantidad}</p>
+                <p><strong>Precio Unitario:</strong> $${item.precio_unitario}</p>
+                <p><strong>Subtotal:</strong> $${item.subtotal}</p>
+                <p><strong>Total Cotización:</strong> $${item.total_cotizacion}</p>
+                <br>
+              </div>
+            `;
+        }).join('')
+        : '<p>No hay cotizaciones en el historial.</p>';
+    })
+    .catch(function(err) {
+      console.error('Error al cargar historial:', err);
+    });
 }
+
 
 function cerrarModalHistorial() {
   document.getElementById('modalHistorial').classList.remove('active');

@@ -203,25 +203,38 @@ function cotizar_productos($cantidad, $valor_producto, $valor_diseño, $valor_im
             $nombre_producto = $producto ? $producto['nombre'] : 'Producto desconocido';
             $imagen_producto = $producto ? $producto['imagen_producto'] : 'imagenes_productos/default.webp';
 
-            echo json_encode([
-                'success' => true,
-                'message' => 'Cotización y detalle registrados',
-                'total' => $total,
-                'nombre_producto' => $nombre_producto,
-                'imagen_producto' => $imagen_producto
-            ]);
+            // 🚀 Insertar en el historial
+            $stmt_historial = $conn->prepare("INSERT INTO historial (id_usuario, fecha, nombre_producto, cantidad, precio_unitario, subtotal, total_cotizacion) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt_historial->bind_param("issiddi", $id_usuario, $fecha, $nombre_producto, $cantidad, $valor_producto, $subtotal, $total);
+
+            if ($stmt_historial->execute()) {
+                // ✅ Todo exitoso: cotización, detalle e historial registrados
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Cotización, detalle e historial registrados',
+                    'total' => $total,
+                    'nombre_producto' => $nombre_producto,
+                    'imagen_producto' => $imagen_producto
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Error al registrar en el historial']);
+            }
+
+            $stmt_historial->close();
+
         } else {
             echo json_encode(['success' => false, 'error' => 'Error al registrar detalle de cotización']);
             $stmt_detalle->close();
         }
+
     } else {
         echo json_encode(['success' => false, 'error' => 'Error al registrar la cotización']);
         $stmt->close();
     }
 
-
     $conn->close();
 }
+
 function eliminar_producto($id_producto) {
     $conn = conectarBD();
     $stmt = $conn->prepare("UPDATE productos SET estado = 'inactivo' WHERE id = ?");
@@ -263,7 +276,7 @@ function eliminar_producto($id_producto) {
                         <li><img src="../imagenes/user.png" alt=""><a href="#" onclick="abrirModal()">Agregar Producto</a></li>
                         <li><img src="../imagenes/edit.png" alt=""><a href="#" onclick="abrirModalModificar()">Modificar Producto</a></li>
                         <li><img src="../imagenes/settings.png" alt=""><a href="#" onclick="abrirModalEliminar()">Eliminar Producto</a></li>
-                        <li><img src="../imagenes/envelope.png" alt=""><a href="#">Ver Historial</a></li>
+                        <li><img src="../imagenes/envelope.png" alt=""><a href="#" onclick="abrirModalHistorial()">Ver Historial</a></li>
                         <li><img src="../imagenes/question.png" alt=""><a href="#">Editar Perfil</a></li>
                         <li><img src="../imagenes/log-out.png" alt=""><a href="../inicio_sesion_multiservicios/logout.php">Cerrar Sesión</a></li>
                     </ul>
@@ -542,89 +555,20 @@ function eliminar_producto($id_producto) {
             </div>
             <div class="modal-body-historial">
                 <div class="historial-cotizaciones">
+                    <div class="imagen-historial" id="imagenHistorial">
+                        <!-- Aquí podrías colocar una imagen opcional si quisieras -->
+                    </div>
                     <div class="historial-contenedor">
-
-                        <div class="tarjeta-cotizacion">
-                            <div>
-                                <p class="titulo-cotizacion">Cotización 7</p>
-                                <p class="monto-cotizacion">$5000</p>
-                            </div>
-                            <div class="info-cotizacion">
-                                <span class="fecha-cotizacion">15/03/2025</span>
-                                <button class="btn-pdf" onclick="descargarPDF(7)">PDF</button>
-                            </div>
-                        </div>
-
-                        <div class="tarjeta-cotizacion">
-                            <div>
-                                <p class="titulo-cotizacion">Cotización 6</p>
-                                <p class="monto-cotizacion">$7300</p>
-                            </div>
-                            <div class="info-cotizacion">
-                                <span class="fecha-cotizacion">13/03/2025</span>
-                                <button class="btn-pdf" onclick="descargarPDF(6)">PDF</button>
-                            </div>
-                        </div>
-
-                        <div class="tarjeta-cotizacion">
-                            <div>
-                                <p class="titulo-cotizacion">Cotización 5</p>
-                                <p class="monto-cotizacion">$9100</p>
-                            </div>
-                            <div class="info-cotizacion">
-                                <span class="fecha-cotizacion">12/03/2025</span>
-                                <button class="btn-pdf" onclick="descargarPDF(5)">PDF</button>
-                            </div>
-                        </div>
-
-                        <div class="tarjeta-cotizacion">
-                            <div>
-                                <p class="titulo-cotizacion">Cotización 4</p>
-                                <p class="monto-cotizacion">$9100</p>
-                            </div>
-                            <div class="info-cotizacion">
-                                <span class="fecha-cotizacion">10/03/2025</span>
-                                <button class="btn-pdf" onclick="descargarPDF(4)">PDF</button>
-                            </div>
-                        </div>
-
-                        <div class="tarjeta-cotizacion">
-                            <div>
-                                <p class="titulo-cotizacion">Cotización 3</p>
-                                <p class="monto-cotizacion">$9100</p>
-                            </div>
-                            <div class="info-cotizacion">
-                                <span class="fecha-cotizacion">09/03/2025</span>
-                                <button class="btn-pdf" onclick="descargarPDF(3)">PDF</button>
-                            </div>
-                        </div>
-
-                        <div class="tarjeta-cotizacion">
-                            <div>
-                                <p class="titulo-cotizacion">Cotización 2</p>
-                                <p class="monto-cotizacion">$9100</p>
-                            </div>
-                            <div class="info-cotizacion">
-                                <span class="fecha-cotizacion">09/03/2025</span>
-                                <button class="btn-pdf" onclick="descargarPDF(2)">PDF</button>
-                            </div>
-                        </div>
-
-                        <div class="tarjeta-cotizacion">
-                            <div>
-                                <p class="titulo-cotizacion">Cotización 1</p>
-                                <p class="monto-cotizacion">$9100</p>
-                            </div>
-                            <div class="info-cotizacion">
-                                <span class="fecha-cotizacion">02/03/2025</span>
-                                <button class="btn-pdf" onclick="descargarPDF(1)">PDF</button>
-                            </div>
+                        <!-- Aquí se insertan las tarjetas dinámicamente -->
+                        <div class="historial" id="historial">
+                            <!-- Las tarjetas-cotizacion se insertan aquí por JS -->
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 
 
     <script>
