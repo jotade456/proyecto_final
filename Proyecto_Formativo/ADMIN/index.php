@@ -129,7 +129,7 @@ function modificar_producto($id, $nombre, $valor) {
 
 function obtener_producto_por_nombre($nombre) {
     $conn = conectarBD();
-    $stmt = $conn->prepare("SELECT id, nombre, valor_producto, imagen_producto FROM productos WHERE TRIM(nombre) = ?");
+    $stmt = $conn->prepare("SELECT id, nombre, valor_producto, imagen_producto FROM productos WHERE TRIM(nombre) = ? AND estado = 'activo'");
     $stmt->bind_param("s", $nombre);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -192,16 +192,23 @@ function cotizar_productos($cantidad, $valor_producto, $valor_diseño, $valor_im
         if ($stmt_detalle->execute()) {
             $stmt_detalle->close();
 
-            // Obtener el nombre del producto
-            $stmt_producto = $conn->prepare("SELECT nombre, imagen_producto FROM productos WHERE id = ?");
+            // Obtener el nombre del producto solo si está ACTIVO
+            $stmt_producto = $conn->prepare("SELECT nombre, imagen_producto FROM productos WHERE id = ? AND estado = 'activo'");
             $stmt_producto->bind_param("i", $id_producto);
             $stmt_producto->execute();
             $res_producto = $stmt_producto->get_result();
             $producto = $res_producto->fetch_assoc();
             $stmt_producto->close();
 
-            $nombre_producto = $producto ? $producto['nombre'] : 'Producto desconocido';
-            $imagen_producto = $producto ? $producto['imagen_producto'] : 'imagenes_productos/default.webp';
+            // Si no existe o está inactivo → error y no deja cotizar
+            if (!$producto) {
+                echo json_encode(['success' => false, 'error' => 'El producto no existe o está inactivo']);
+                $conn->close();
+                return;
+            }
+
+            $nombre_producto = $producto['nombre'];
+            $imagen_producto = $producto['imagen_producto'];
 
             // 🚀 Insertar en el historial
             $stmt_historial = $conn->prepare("INSERT INTO historial (id_usuario, fecha, nombre_producto, cantidad, precio_unitario, subtotal, total_cotizacion) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -277,7 +284,7 @@ function eliminar_producto($id_producto) {
                         <li><img src="../imagenes/edit.png" alt=""><a href="#" onclick="abrirModalModificar()">Modificar Producto</a></li>
                         <li><img src="../imagenes/settings.png" alt=""><a href="#" onclick="abrirModalEliminar()">Eliminar Producto</a></li>
                         <li><img src="../imagenes/envelope.png" alt=""><a href="#" onclick="abrirModalHistorial()">Ver Historial</a></li>
-                        <li><img src="../imagenes/question.png" alt=""><a href="#">Editar Perfil</a></li>
+                        <li><img src="../imagenes/question.png" alt=""><a href="#" onclick="abrirModalPerfil()">Editar Perfil</a></li>
                         <li><img src="../imagenes/log-out.png" alt=""><a href="../inicio_sesion_multiservicios/logout.php">Cerrar Sesión</a></li>
                     </ul>
                 </div>
@@ -565,6 +572,90 @@ function eliminar_producto($id_producto) {
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-------  MODAL ADMINISTRACION DE CUENTAS ------>    
+    <div class="modal-cuentas" id="modalCuentas">
+        <div class="modal-content-cuentas">
+            <div class="modal-header-cuentas">
+                <span class="back-arrow-cuentas" onclick="cerrarModalCuentas()">&larr;</span>
+                <h2>Cuentas</h2>
+            </div>
+            <div class="modal-body-cuentas">
+                <div class="usuarios-contenedor" id="usuariosContenedor">
+                    <div class="tarjeta-usuario" data-nombre="Javier Medina">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2922/2922510.png" alt="avatar">
+                        <h4 class="nombre_usuario">Javier Medina</h4>
+                        <p>Empleado</p>
+                    </div>
+                    <div class="tarjeta-usuario" data-nombre="Alfonso Caceres">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2922/2922510.png" alt="avatar">
+                        <h4 class="nombre_usuario">Alfonso Caceres</h4>
+                        <p>Empleado</p>
+                    </div>
+                    <div class="tarjeta-usuario" data-nombre="Keynner Jaimes">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2922/2922510.png" alt="avatar">
+                        <h4 class="nombre_usuario">Keynner Jaimes</h4>
+                        <p>Empleado</p>
+                    </div>
+                    <div class="tarjeta-usuario" data-nombre="Luis Romero">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2922/2922510.png" alt="avatar">
+                        <h4 class="nombre_usuario">Luis Romero</h4>
+                        <p>Empleado</p>
+                    </div>
+                    <div class="tarjeta-usuario" data-nombre="Pedro Ramos">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2922/2922510.png" alt="avatar">
+                        <h4 class="nombre_usuario">Pedro Ramos</h4>
+                        <p>Empleado</p>
+                    </div>
+                    <div class="tarjeta-usuario" data-nombre="Camila Díaz">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2922/2922510.png" alt="avatar">
+                        <h4 class="nombre_usuario">Camila Díaz</h4>
+                        <p>Empleado</p>
+                    </div>
+                </div>
+                <hr class="linea-separadora">
+                <button class="boton-eliminar" onclick="eliminarSeleccionados()">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-------  MODAL EDITAR PERFIL ------>  
+
+    <div class="modal-perfil" id="modalPerfil">
+        <div class="modal-content-perfil">
+            <div class="modal-header-perfil">
+                <span class="back-arrow-perfil" onclick="cerrarModalPerfil()">&larr;</span>
+                <h2>Editar Perfil</h2>
+            </div>
+            <div class="modal-body-perfil">
+                <div class="perfil-img-container">
+                    <label for="imagenPerfil" class="img-label">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2922/2922510.png" alt="Perfil" class="perfil-img" />
+                        <input type="file" id="imagenPerfil" accept="image/*" hidden />
+                    </label>
+                </div>
+
+                <form class="formulario-perfil">
+                    <div class="campo">
+                        <label for="nombre">Nombre de perfil</label>
+                        <input type="text" id="nombre" name="nombre_perfil" placeholder="Nuevo nombre">
+                    </div>
+                    <div class="campo">
+                        <label for="correo">Correo electrónico</label>
+                        <input type="email" id="correo" name="correo_perfil" placeholder="Nuevo correo">
+                    </div>
+                    <div class="campo">
+                        <label for="contraseña">Contraseña</label>
+                        <input type="password" id="contraseña" name="contraseña_perfil" placeholder="Nueva contraseña">
+                    </div>
+                    <button type="button" class="btn-perfil">Aplicar cambios</button>
+                </form>
             </div>
         </div>
     </div>

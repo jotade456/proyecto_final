@@ -1720,3 +1720,259 @@ body {
 .btn-pdf:hover {
     background-color: #148c81;
 }
+
+/* -------- CUENTAS -------- */
+
+.modal-cuentas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+.modal-cuentas.active {
+    display: flex;
+}
+
+.modal-content-cuentas {
+    background: #fff;
+    border-radius: 15px;
+    max-width: 900px;
+    width: 90%;
+    height: 530px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header-cuentas {
+    background: #17A595;
+    color: white;
+    padding: 1em 1.5em;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 20px;
+}
+
+.modal-header-cuentas .back-arrow-cuentas {
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.modal-body-cuentas {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.linea-separadora {
+  border: none;
+  height: 2px;
+  background-color: #242424;
+  margin: 10px auto 20px;
+  width: 80%;
+  border-radius: 5px;
+}
+
+
+.usuarios-contenedor {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 20px 10px;
+}
+
+.tarjeta-usuario {
+    background: #D6F0EF;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
+    border: 2px solid transparent;
+}
+
+.tarjeta-usuario img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+
+.tarjeta-usuario.seleccionado {
+    border: 2px solid #17A595;
+    background-color: #b6e4e2;
+}
+
+.tarjeta-usuario h4 {
+    margin: 5px 0 0;
+    font-weight: 700;
+}
+
+.tarjeta-usuario p {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.boton-eliminar {
+    display: block;
+    margin: 20px auto 10px;
+    padding: 10px 30px;
+    background-color: #17A595;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.boton-eliminar:hover {
+    background-color: #139384;
+}
+
+/* -------- EDITAR PERFIL -------- */
+
+.modal-perfil {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+.modal-perfil.active {
+    display: flex;
+}
+
+.modal-content-perfil {
+    background: #fff;
+    border-radius: 15px;
+    max-width: 900px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header-perfil {
+    background: #17A595;
+    color: white;
+    padding: 1em 1.5em;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 20px;
+}
+
+.modal-header-perfil .back-arrow-perfil {
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.modal-body-perfil {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 30px;
+  gap: 30px;
+  justify-content: center;
+  align-items: center;
+}
+
+.perfil-img-container {
+  flex: 0 0 150px;
+  text-align: center;
+  align-items: center;
+  margin-top: -30px;
+  margin-left: 70px;
+}
+
+.perfil-img {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.perfil-img:hover {
+  transform: scale(1.05);
+}
+
+.formulario-perfil {
+  flex: 1;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding-left: 100px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+}
+
+.campo label {
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #333;
+}
+
+.campo input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 300px;
+}
+
+.btn-perfil {
+  background-color: #17A595;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  width: 150px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(23, 165, 149, 0.4);
+  transition: background-color 0.2s;
+  margin-left: 70px;
+}
+
+.btn-perfil:hover {
+  background-color: #128b7a;
+}

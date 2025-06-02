@@ -488,3 +488,51 @@ function cerrarModalHistorial() {
 function descargarPDF(numero) {
   alert(`Descargando Cotización ${numero} en PDF...`);
 }
+
+//------------- MODAL CUENTAS -----------------
+
+function abrirModalCuentas() {
+  document.getElementById('modalCuentas').classList.add('active');
+}
+
+function cerrarModalCuentas() {
+  document.getElementById('modalCuentas').classList.remove('active');
+}
+
+document.querySelectorAll('.tarjeta-usuario').forEach(tarjeta => {
+    tarjeta.addEventListener('click', () => {
+        tarjeta.classList.toggle('seleccionado');
+    });
+});
+
+function eliminarSeleccionados() {
+    const seleccionados = document.querySelectorAll('.tarjeta-usuario.seleccionado');
+    const nombres = Array.from(seleccionados).map(t => t.dataset.nombre);
+    console.log("Usuarios eliminados:", nombres);
+    alert("Usuarios eliminados: " + nombres.join(', '));
+}
+
+
+//------------- MODAL PERFIL -----------------
+
+function abrirModalPerfil() {
+  document.getElementById('modalPerfil').classList.add('active');
+}
+
+function cerrarModalPerfil() {
+  document.getElementById('modalPerfil').classList.remove('active');
+}
+
+const imagenPerfil = document.getElementById('imagenPerfil');
+const imgPreview = document.querySelector('.perfil-img');
+
+imagenPerfil.addEventListener('change', function () {
+  const archivo = this.files[0];
+  if (archivo) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      imgPreview.src = e.target.result;
+    };
+    reader.readAsDataURL(archivo);
+  }
+});
