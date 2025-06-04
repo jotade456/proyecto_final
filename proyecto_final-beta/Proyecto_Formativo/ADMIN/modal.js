@@ -449,27 +449,49 @@ function buscarProductoParaCotizar() {
 
 
 //------------- MODAL HISTORIAL DE COTIZACIONES -----------------
-
 function abrirModalHistorial() {
   document.getElementById('modalHistorial').classList.add('active');
 
   fetch('historial.php')
     .then(function(res) { return res.json(); })
     .then(function(historial) {
+      console.log('✅ Historial recibido:', historial); // 🚀 Debug
+
+      // 🚀 El contenedor AHORA es el .historial-contenedor con id="historial"
       var contenedor = document.getElementById('historial');
+
       contenedor.innerHTML = historial.length
         ? historial.map(function(item) {
-            return `
-              <div class="tarjeta-cotizacion">
-                <p class="titulo-cotizacion"><strong>Cotización</strong> ${item.id}</p>
-                <p class="id-usuario"><strong>ID Usuario:</strong> ${item.id_usuario}</p>
-                <p><strong>Fecha:</strong> ${item.fecha}</p>
+
+            // 🚀 ProductosHTML → mostramos el producto individual
+            const productosHTML = `
+              <div class="producto-item">
                 <p><strong>Producto:</strong> ${item.nombre_producto}</p>
                 <p><strong>Cantidad:</strong> ${item.cantidad}</p>
                 <p><strong>Precio Unitario:</strong> $${item.precio_unitario}</p>
                 <p><strong>Subtotal:</strong> $${item.subtotal}</p>
-                <p><strong>Total Cotización:</strong> $${item.total_cotizacion}</p>
-                <br>
+                <hr>
+              </div>
+            `;
+
+            // 🚀 TARJETA COMPLETA:
+            return `
+              <div class="tarjeta-cotizacion">
+                <p class="titulo-cotizacion"><strong>Cotización</strong> ${item.id}</p>
+
+                <div class="info-cotizacion">
+                  <p><strong>ID Usuario:</strong> ${item.id_usuario}</p>
+                  <p><strong>Fecha:</strong> ${item.fecha}</p>
+                  <p><strong>Total Cotización:</strong> $${item.total_cotizacion}</p>
+                </div>
+
+                <div class="detalle-productos">
+                  ${productosHTML}
+
+                  <a href="generar_pdf.php?cotizacion_id=${item.id}" target="_blank" class="boton-pdf">
+                    📄 Descargar PDF
+                  </a>
+                </div>
               </div>
             `;
         }).join('')
@@ -485,9 +507,7 @@ function cerrarModalHistorial() {
   document.getElementById('modalHistorial').classList.remove('active');
 }
 
-function descargarPDF(numero) {
-  alert(`Descargando Cotización ${numero} en PDF...`);
-}
+
 
 
 

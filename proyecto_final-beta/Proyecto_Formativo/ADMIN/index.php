@@ -336,13 +336,18 @@ function actualizar_datos_usuario($id_usuario, $nombre, $correo, $nueva_contrase
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Multiservicios Roma</title>
     <link rel="stylesheet" href="estilos.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script>
     src="https://kit.fontawesome.com/81581fb069.js"
     crossorigin="anonymous"
     </script>
+    <!-- FAVICON -->
+    <link rel="icon" type="image/png" sizes="32x32" href="imagenes/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="imagenes/favicon-16x16.png">
+    <link rel="shortcut icon" href="imagenes/favicon.ico">
+
 </head>
 
 <body>
@@ -644,16 +649,16 @@ function actualizar_datos_usuario($id_usuario, $nombre, $correo, $nueva_contrase
                     <div class="imagen-historial" id="imagenHistorial">
                         <!-- Aquí podrías colocar una imagen opcional si quisieras -->
                     </div>
-                    <div class="historial-contenedor">
-                        <!-- Aquí se insertan las tarjetas dinámicamente -->
-                        <div class="historial" id="historial">
-                            <!-- Las tarjetas-cotizacion se insertan aquí por JS -->
-                        </div>
+                    <!-- 🚀 AQUÍ va directamente el historial-contenedor con id="historial" -->
+                    <div class="historial-contenedor" id="historial">
+                        <!-- Las tarjetas-cotizacion se insertan aquí por JS -->
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+
     
     <!-------  MODAL ADMINISTRACION DE CUENTAS ------>    
     <div class="modal-cuentas" id="modalCuentas">

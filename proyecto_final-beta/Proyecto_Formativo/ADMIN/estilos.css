@@ -1621,9 +1621,9 @@ body {
 .modal-content-historial {
     background: #fff;
     border-radius: 15px;
-    max-width: 900px;
-    width: 90%;
-    height: 600px;
+    max-width: 1000px; /* 🚀 más ancho */
+    width: 95%; /* 🚀 más ancho */
+    height: 80vh; /* 🚀 más alto: 80% viewport height */
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1638,88 +1638,91 @@ body {
 .modal-header-historial {
     background: #17A595;
     color: white;
-    padding: 1em 1.5em;
+    padding: 1.2em 2em;
     display: flex;
     align-items: center;
     gap: 15px;
-    font-size: 20px;
+    font-size: 22px;
 }
 
 .modal-header-historial .back-arrow-historial {
     cursor: pointer;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: bold;
 }
 
 .modal-body-historial {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
+    padding: 25px;
 }
 
-
-
-.historial-cotizaciones {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 10px;
-    font-family: 'Nunito', sans-serif;
-}
-
-.historial-contenedor {
-    max-height: 450px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding-right: 10px;
-}
-
+/* Tarjeta de cotización */
 .tarjeta-cotizacion {
     background-color: #d3f1ee;
     border-radius: 16px;
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.titulo-cotizacion {
-    font-weight: 600;
-    margin: 0;
-}
-
-.monto-cotizacion {
-    color: #3ba62a;
-    font-weight: bold;
-    margin: 5px 0 0;
-}
-
-.info-cotizacion {
+    padding: 25px 30px;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
+    gap: 14px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease;
+    overflow: visible; /* 🚀 IMPORTANTE para que no corte el contenido */
 }
 
-.fecha-cotizacion {
-    font-weight: 600;
-}
-
-.btn-pdf {
-    background-color: #17a595;
-    color: white;
-    border: none;
-    padding: 6px 16px;
-    border-radius: 8px;
-    cursor: pointer;
+/* Título de la tarjeta */
+.titulo-cotizacion {
+    font-size: 20px;
     font-weight: bold;
-    transition: background-color 0.3s ease;
+    color: #333;
 }
 
-.btn-pdf:hover {
-    background-color: #148c81;
+/* Info general de la cotización */
+.info-cotizacion {
+    display: flex;
+    flex-direction: column; /* 🚀 Para que cada línea quede debajo */
+    gap: 6px;
 }
+
+/* Detalle de productos (Producto + Botón PDF) */
+.detalle-productos {
+    display: flex;
+    flex-direction: column; /* 🚀 Para que el botón quede debajo */
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Producto individual */
+.producto-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Botón PDF */
+.boton-pdf {
+    display: inline-block;
+    margin-top: 16px;
+    margin-bottom: 12px;
+    align-self: flex-start;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 15px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.boton-pdf:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+
+
+
 
 /* -------- CUENTAS -------- */
 

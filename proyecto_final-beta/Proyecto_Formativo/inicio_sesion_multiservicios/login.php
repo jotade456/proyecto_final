@@ -74,6 +74,9 @@ iniciar_sesion();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión</title>
     <link rel="stylesheet" href="styleLogin.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="imagenes/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="imagenes/favicon-16x16.png">
+    <link rel="shortcut icon" href="imagenes/favicon.ico">
 </head>
 <body>
     <div class="container">
