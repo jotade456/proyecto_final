@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="estilos.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="header__container">
+        <nav class="navbar">
+            <section class="waveNavbar">
+                <div class="wavenav wave1nav"></div>
+                <div class="wavenav wave2nav"></div>
+                <div class="wavenav wave3nav"></div>
+                <div class="wavenav wave4nav"></div>
+            </section>
+            <div class="navbar-left">
+                <div class="logo">
+                    <img src="../imagenes/LogoRoma2.png" alt="Logo Roma">
+                </div>
+            </div>
+            <div class="navbar-center">
+            </div>
+            <div class="navbar-right action">
+                <div class="profile" onclick="menuToggle()">
+                    <img id="imgPerfilNav" src="../imagenes/1.jpg" alt="Foto de perfil del administrador">
+                </div>
+                <div class="menu">
+                    <h3>
+                        <span id="nombrePerfil" class="nombre-usuario">Nombre</span><br>
+                        <span id="rolPerfil" class="rol-usuario">Rol</span>
+                    </h3>
+                    <ul>
+                        <li><img src="../imagenes/question.png" alt=""><a href="#" onclick="abrirModalPerfil(); cargarDatosPerfil();">Editar Perfil</a></li>
+                        <li><img src="../imagenes/log-out.png" alt=""><a href="../inicio_sesion_multiservicios/logout.php">Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="boton-regresar" onclick="window.location.href='index.php'">
+            <i class="fas fa-arrow-left"></i> Volver
+    </div>
+
+    <section class="usuarios-container">
+        <div class="usuarios-header">
+            <h2>Listado de empleados</h2>
+        </div>
+
+        <div class="tabla-usuarios" id="contenedorUsuariosSimulados">
+            <!-- Aquí puedes dejar uno o dos elementos simulados solo para vista previa -->
+            <div class="fila encabezado">
+                <div class="col nombre">Nombre</div>
+                <div class="col correo">Correo</div>
+                <div class="col fecha">Fecha registro</div>
+                <div class="col estado">Estado</div>
+                <div class="col acciones">Acciones</div>
+            </div>
+
+            <!-- Se cargarán dinámicamente más adelante -->
+        </div>
+    </section>
+
+
+    <!--- modal inhabilitar --->
+    <div class="modal-eliminar" id="modalEliminar">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h3>Inhabilitar Empleado</h3>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro que quieres inhabilitar este empleado?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="btnConfirmarEliminarCuenta" class="btn-aceptar">Aceptar</button>
+                <button class="btn-cancelar" onclick="cerrarVentanaConfirmacion()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div id="mensajeExito" class="mensaje-exito">Empleado inhabilitado con éxito</div>
+    
+    <!--- modal activar --->
+    <div class="modal-activar" id="modalActivar">
+        <div class="modal-contenido">
+            <div class="modal-header activar-header">
+                <h3>Activar Empleado</h3>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro que quieres activar este empleado?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-aceptar-activar">Aceptar</button>
+                <button class="btn-cancelar" onclick="cerrarModalActivar()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ventanaSeleccionCuentas" class="ventana-seleccion" style="display: none;">
+        <div class="ventana-contenido">
+            <div class="ventana-encabezado">
+                <h2>Advertencia</h2>
+            </div>
+            <div class="ventana-cuerpo">
+                <p>Debes seleccionar un usuario primero.</p>
+            </div>
+            <div class="ventana-footer">
+                <button id="btnCerrarSeleccionCuentas" class="btn-aceptar">Aceptar</button>
+            </div>
+        </div>
+    </div>
+    <div id="ventanaEmergenteCuentas" class="ventana-cuenta" style="display: none;">
+        <div class="ventana-contenido">
+            <div class="ventana-encabezado">
+                <h2>Cuenta actualizada</h2>
+            </div>
+            <div class="ventana-cuerpo">
+                <p>La cuenta fue modificada exitosamente.</p>
+            </div>
+        </div>
+    </div>
+
+    <section>
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+        <div class="wave wave3"></div>
+        <div class="wave wave4"></div>
+    </section>
+    
+    <script>
+        function menuToggle() {
+            const toggleMenu = document.querySelector(".menu");
+            toggleMenu.classList.toggle('active');
+        }
+
+        document.addEventListener("click", function(e) {
+            const menu = document.querySelector(".menu");
+            const profile = document.querySelector(".profile");
+
+            if (!menu.contains(e.target) && !profile.contains(e.target)) {
+                menu.classList.remove("active");
+            }
+        });
+        
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // ⚠️ Esto asegura que la tabla de usuarios se llene al cargar la página
+            if (typeof cargarUsuarios === "function") {
+                cargarUsuarios();
+            } else {
+                console.warn("⚠️ cargarUsuarios no está disponible.");
+            }
+        });
+    </script>
+    
+    
+    
+    
+    
+    
+    <script  src="modal.js"></script>
+    <script src="modal_cuentas.js"></script>
+</body>
+</html>
